@@ -1,0 +1,77 @@
+body{
+	background-color:#dfdfdf;
+	font-family:Verdana;
+	font-size: 12px;
+}
+
+div#kontener{
+	margin: 0 auto;
+	background-color:#fefefe;
+	width: 900px;
+	height:100%;
+	border: 2px #3f3f3f dotted;
+}
+
+div#naglowek{
+	height:10%;
+	font-size: 25px;
+	font-weight:bold;
+	margin: 15px 25px;
+}
+
+div#srodek{
+	height: 85%;
+	//background-color:yellow;
+}
+
+div#kol_lewa{
+	float:left;
+	padding-left: 15px;
+	padding-right: 15px;
+	width:650px;
+	height: 100%;
+	border:1px solid black;
+}
+
+
+div#kol_prawa{
+	float:left;
+	width:215px;
+	height: auto;
+	border:1px solid black;
+}
+
+p.tytul{
+	margin:0;
+	font-weight:bold;
+	font-size:15px;
+}
+
+p.meta{
+	text-shadow: 1px 1px #e3e3e3;
+	font-size:10px;
+	font-style:italic;
+	font-weight:bold;
+	text-decoration:italic;
+	color:#a3a3a3;
+	margin: 2px;
+}
+
+p.meta:hover{
+	text-shadow: 1px 1px #e3e3e3;
+	font-size:10px;
+	font-style:italic;
+	font-weight:bold;
+	text-decoration:italic;
+	color:#121212;
+	margin: 2px;
+	cursor: pointer;
+}
+
+p.tresc{
+	text-align:justify;
+}
+
+p.wiecej{
+	text-align:right;
+}
