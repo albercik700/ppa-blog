@@ -1,7 +1,7 @@
 <?php
 require_once "db.php";
-
-$db=connect();
+session_start();
+/*$db=connect();
 $result=$db->query("select * from uzytkownicy");
 while($row=$result->fetch_assoc()){
 	echo $row['nazwa']."<br/>";
@@ -10,3 +10,7 @@ while($row=$result->fetch_assoc()){
 	echo $row['data_rejestracji'];
 }
 $db->close();
+*/
+$db = @new BlogManager("localhost","root","","blog");
+echo $db->login("admin","admin");
+?>
