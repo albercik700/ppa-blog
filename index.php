@@ -1,5 +1,7 @@
 <?php
 	require_once "db.php";
+	session_start();
+	$db = @new BlogManager("localhost","root","","blog");
 ?>
 <html>
 <head>
@@ -31,7 +33,8 @@
 				<hr/>
 			</div>
 			<div id="kol_prawa">
-
+				<p>Zaloguj</p>
+				<p>Zarejestruj</p>
 			</div>
 		</div>
 	</div>

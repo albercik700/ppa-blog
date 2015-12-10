@@ -1,9 +1,11 @@
 <?php
 class BlogManager extends mysqli{
+	private $id;
 	private $nazwa;
 	private $haslo;
 	private $email;
 	private $data_rejestracji;
+	private $sesja;
 	function __construct($host,$user,$password,$dbname){
 		parent::__construct($host,$user,$password,$dbname);
 		if(mysqli_connect_errno()!=0){
@@ -21,7 +23,6 @@ class BlogManager extends mysqli{
 	}
 
 	private function username_av($username){
-		//Sprawdza czy jest nazwa jest dostepna
 		$stmt=$this->prepare("select distinct nazwa from uzytkownicy order by nazwa");
 		$stmt->execute();
 		$result=$stmt->get_result();
@@ -33,44 +34,79 @@ class BlogManager extends mysqli{
 	}
 
 	public function register($username,$password,$email){
-		$password=hash("sha512",'31337|'.$password);
-		$date=date("Y-m-d H:i:s");	
-		if($this->re_text($username)!=0 and $this->re_email($email) and $this->username_av($username)!=0){
+		if($this->re_text($username)!=0 and $this->re_email($email) and $this->username_av($username)!=0 and sizeof($password)>=8){
+			$password=hash("sha512",'31337|'.$password);
+			$date=date("Y-m-d H:i:s");	
 			$stmt=$this->prepare("insert into uzytkownicy(nazwa,pass,email,data_rejestracji) values(?,?,?,?)");
 			$stmt->bind_param("ssss",$username,$password,$emila,$date);
 			$stmt->execute();
 			$result=$stmt->get_result();
-			if(!$result){
-				return 0;
-			}else{
+			if($result)
 				return 1;
-			}
 		}
+		return 0;
 	}
 
-	public function login($username,$password){
+	public function logIn($username,$password){
 		$password=hash("sha512",'31337|'.$password);
-		$stmt=$this->prepare('select nazwa,pass,email,data_rejestracji from uzytkownicy where nazwa=? limit 1');
+		$stmt=$this->prepare('select * from uzytkownicy where nazwa=? limit 1');
 		$stmt->bind_param("s",$username);
 		$stmt->execute();
 		$result=$stmt->get_result();
 		$row= $result->fetch_assoc();
-		if($this->re_text($username)==1 and $password==$row['pass'] and $row!=NULL){
-			$nazwa=$row['nazwa'];
-			$haslo=$row['pass'];
-			$email=$row['email'];
-			$data_rejestracji=$row['data_rejestracji'];
-			$SESSION['login']=hash("md5",$nazwa).session_id();
-			return 1;//True;
-		}else{
-			return 0;//False;
+		if(!isset($_SESSION['login']) and $this->re_text($username)==1 and $password==$row['pass'] and !is_null($row)){
+			$this->id=$row['id'];
+			$this->nazwa=$row['nazwa'];
+			$this->haslo=$row['pass'];
+			$this->email=$row['email'];
+			$this->data_rejestracji=$row['data_rejestracji'];
+			$this->sesja=session_id();
+			$_SESSION['login']=session_id();
+			$poczatek_sesji=date("Y-m-d H:i:s");
+			$koniec_sesji=date("Y-m-d H:i:s",strtotime("+25 minutes",strtotime($poczatek_sesji)));
+			$stmt->prepare("insert into zalogowani(fk_uzytkownik,sesja,poczatek_sesji,koniec_sesji) values(?,?,?,?)");
+			$stmt->bind_param("isss",$this->id,$this->sesja,$poczatek_sesji,$koniec_sesji);
+			$stmt->execute();
+			$result=$stmt->affected_rows;
+			$stmt->close();
+			if($result!=0)
+				return 1;//True;
 		}
+		return 0;//False;
 	}
 
-	public function logout(){
+	public function logOut(){
 		session_destroy();
-		session_start();
-		session_regenerate_id();
+		$stmt=$this->prepare("select id from zalogowani where sesja = ?");
+		$stmt->bind_param("s",$_SESSION['login']);
+		$stmt->execute();
+		$result=$stmt->get_result();
+		if($stmt->affected_rows>0)
+			$this->id=$result->fetch_assoc()['id'];
+		$stmt->prepare("delete from zalogowani where id = ?");
+		$stmt->bind_param("d",$this->id);
+		$stmt->execute();
+		if($stmt->affected_rows==1)
+			return 1;
+		else
+			return 0;
+	}
+
+	public function logStatus($var_sesja="None"){
+		$query="select zal.sesja from zalogowani zal join uzytkownicy usr on zal.fk_uzytkownik=usr.id where sesja = ?";
+		$stmt=$this->prepare($query);
+		$stmt->bind_param("s",$var_sesja);
+		$stmt->execute();
+		$result=$stmt->get_result();
+		$row=$result->fetch_assoc();
+		/*echo "DB:".$row['sesja']."<br/>";
+		echo '$_SESSION[\'login\']:'.$_SESSION['login']."<br/>";
+		echo '$this->sesja:'.$this->sesja."<br/>";
+		echo '$this->nazwa:'.$this->nazwa."<br/>";*/
+		if($var_sesja!="" and $var_sesja==$row['sesja'])
+			return 1;
+		else
+			return 0;
 	}
 }
 ?>
