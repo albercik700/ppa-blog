@@ -62,6 +62,7 @@ class BlogManager extends mysqli{
 			$this->email=$row['email'];
 			$this->data_rejestracji=$row['data_rejestracji'];
 			$this->sesja=session_id();
+			$_SESSION['id']=$this->id;
 			$_SESSION['login']=session_id();
 			$_SESSION['nazwa']=$this->nazwa;
 			$_SESSION['email']=$this->email;
@@ -85,6 +86,7 @@ class BlogManager extends mysqli{
 		$stmt=$this->prepare("delete from zalogowani where sesja = ?");
 		$stmt->bind_param("s",$_SESSION['login']);
 		$stmt->execute();
+		unset($_SESSION['id']);
 		unset($_SESSION['login']);
 		unset($_SESSION['nazwa']);
 		unset($_SESSION['data_rejestracji']);
@@ -112,8 +114,65 @@ class BlogManager extends mysqli{
 			return 0;
 	}
 
-	public function getPosts(){
-		$query="select id from wpisy";
+	public function showLoggedIn(){
+		$query="select usr.nazwa from zalogowani zal join uzytkownicy usr on zal.fk_uzytkownik=usr.id ";
+		$stmt=$this->prepare($query);
+		$stmt->execute();
+		$result=$stmt->get_result();
+		$row=$result->fetch_assoc();
+		$out="";
+		if($row){
+			foreach($row as $x){
+				$out=$out.$x.", ";
+			}
+		}
+		return $out;
+	}
+
+	public function getUser(){
+		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
+			$this->id=$_SESSION['id'];
+			$this->nazwa=$_SESSION['nazwa'];
+			$this->email=$_SESSION['email'];
+			$this->data_rejestracji=$_SESSION['data_rejestracji'];
+			$this->sesja=$_SESSION['login'];
+		}
+		return array('nazwa'=>$this->nazwa,'email'=>$this->email,'data rejestracji'=>$this->data_rejestracji,'ostatnie logowanie'=>$this->lastLogin($this->id));
+	}
+
+	public function lastLogin($userID="0"){
+		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
+			$stmt=$this->prepare("select min(x.data_zdarzenia) as last_log from (select * from historia_zdarzen where fk_uzytkownik=? and fk_zdarzenie=2 order by id desc limit 2)x");
+			$stmt->bind_param("d",$userID);
+			$stmt->execute();
+			$result=$stmt->get_result();
+			return $result->fetch_assoc()['last_log'];
+		}
+		return "";
+	}
+
+	public function updateUser($passwd,$email){
+		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
+			if($this->re_email($email)==1 && strlen($passwd)>=8){
+				$passwd=hash("sha512",'31337|'.$passwd);
+				$stmt=$this->prepare("update uzytkownicy set pass=?,email=? where id=?");
+				$stmt->bind_param("ssd",$passwd,$email,$_SESSION['id']);
+				$stmt->execute();
+				$result=$stmt->affected_rows;
+				$stmt->close();
+				$this->email=$_SESSION['email'];
+				if($result!=0)
+					return 1;//True;
+			}
+			return 0;//False;
+		}
+	}
+
+	public function getStatus(){
+		$stmt=$this->prepare("select id,nazwa from status");
+		$stmt->execute();
+		$result=$stmt->get_result();
+		echo $result;
 	}
 }
 class Post{

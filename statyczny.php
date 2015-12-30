@@ -29,13 +29,13 @@
 				<hr/>
 			</div>
 			<div id="kol_prawa">
-					Profil:
-					<ul>
-						<li title="nazwa użytkownika"><b>admin</b></li>
-						<li title="e-mail"><b>prezydent@wp.pl</b></li>
-						<li title="data rejestracji"><b>2015-12-07 19:56:41</b></li>
-						<li title="ostatnie logowanie"><b>2015-12-30 13:43:55</b></li>
-					</ul>
+				Profil:
+				<ul>
+					<li title="nazwa użytkownika"><b>admin</b></li>
+					<li title="e-mail"><b>prezydent@wp.pl</b></li>
+					<li title="data rejestracji"><b>2015-12-07 19:56:41</b></li>
+					<li title="ostatnie logowanie"><b>2015-12-30 13:43:55</b></li>
+				</ul>
 				<ul>
 					<li>Edytuj profil</li>
 					<li>Dodaj wpis</li>

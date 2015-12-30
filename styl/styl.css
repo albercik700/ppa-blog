@@ -103,9 +103,17 @@ input[type=password]{
 }
 
 p.alert{
-	margin: 0 auto;
+	margin: auto;
 	width:200px;
+	height:10px;
+	padding:5px;
+	text-align:center;
+	border-radius:10px;
+	background-color:#dfdfdf;
+	font-weight:bold;
+	font-size:10px;
 	position:absolute;
+	left:0;right:0;top:0;bottom:200;
 }
 
 ul,li,p#mini{
