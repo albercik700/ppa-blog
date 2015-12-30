@@ -15,11 +15,9 @@
 			<hr/>
 		</div>
 		<div id="srodek">
-			<div id="kol_lewa">
-				<?php
-					require_once "action.php";
-				?>
-			</div>
+			<?php
+				require_once "action.php";
+			?>
 		</div>
 	</div>
 </body>

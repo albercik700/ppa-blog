@@ -68,8 +68,9 @@ class BlogManager extends mysqli{
 			$_SESSION['data_rejestracji']=$this->data_rejestracji;
 			$poczatek_sesji=date("Y-m-d H:i:s");
 			$koniec_sesji=date("Y-m-d H:i:s",strtotime("+25 minutes",strtotime($poczatek_sesji)));
-			$stmt->prepare("insert into zalogowani(fk_uzytkownik,sesja,poczatek_sesji,koniec_sesji) values(?,?,?,?)");
-			$stmt->bind_param("isss",$this->id,$this->sesja,$poczatek_sesji,$koniec_sesji);
+			$adres_ip=$_SERVER['REMOTE_ADDR'];
+			$stmt->prepare("insert into zalogowani(fk_uzytkownik,sesja,poczatek_sesji,koniec_sesji,adres_ip) values(?,?,?,?,?)");
+			$stmt->bind_param("issss",$this->id,$this->sesja,$poczatek_sesji,$koniec_sesji,$adres_ip);
 			$stmt->execute();
 			$result=$stmt->affected_rows;
 			$stmt->close();
@@ -109,6 +110,21 @@ class BlogManager extends mysqli{
 			return 1;
 		else
 			return 0;
+	}
+
+	public function getPosts(){
+		$query="select id from wpisy";
+	}
+}
+class Post{
+	private $id;
+	private $temat;
+	private $tresc;
+	private $autor;
+	private $data_wpisu;
+	private $tagi=array();
+	function __construct($db,$temat,$tresc,$autor,$data_wpisu,$tagi=array()){
+		
 	}
 }
 ?>

@@ -80,3 +80,38 @@ a#logo{
 	text-decoration:none;
 	color:black;
 }
+
+a:link{
+	color:black;
+	text-decoration:none;
+}
+a:hover{
+	text-decoration:underline;
+}
+
+a:visited{
+	text-decoration:none;
+	color:black;
+}
+
+input[type=text]{
+	width: 150px;
+}
+
+input[type=password]{
+	width: 150px;
+}
+
+p.alert{
+	margin: 0 auto;
+	width:200px;
+	position:absolute;
+}
+
+ul,li,p#mini{
+	font-size:10px;
+}
+
+form.log_reg{
+	display:none;
+}

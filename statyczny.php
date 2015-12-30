@@ -1,9 +1,4 @@
-<?php
-	require_once "db.php";
-	session_start();
-	$db = @new BlogManager("localhost","root","","blog");
-	require_once "action.php"
-?>
+
 <html>
 <head>
 	<title></title>
@@ -34,17 +29,21 @@
 				<hr/>
 			</div>
 			<div id="kol_prawa">
-			<?php
-				if(!isset($_SESSION['login'])){
-			?>
-				<p><a href="?act=login">Zaloguj</a></p>
-				<p><a href="?act=reg">Zarejestruj</a></p>
-			<?php
-				}else{
-					echo "Jestes zalogowany<br/>";
-					echo "<a href='.?act=logout'>Wyloguj</a>";
-				}
-			?>
+					Profil:
+					<ul>
+						<li title="nazwa użytkownika"><b>admin</b></li>
+						<li title="e-mail"><b>prezydent@wp.pl</b></li>
+						<li title="data rejestracji"><b>2015-12-07 19:56:41</b></li>
+						<li title="ostatnie logowanie"><b>2015-12-30 13:43:55</b></li>
+					</ul>
+				<ul>
+					<li>Edytuj profil</li>
+					<li>Dodaj wpis</li>
+				</ul>
+			</div>
+			<div id="kol_prawa">
+				Zalogowani:
+				<p id="mini">admin, kamilos1, kamilos2, kamilos3, admin, kamilos1, kamilos2, kamilos3, admin, kamilos1, kamilos2, kamilos3</p>
 			</div>
 		</div>
 	</div>
