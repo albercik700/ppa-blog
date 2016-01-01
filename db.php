@@ -119,12 +119,9 @@ class BlogManager extends mysqli{
 		$stmt=$this->prepare($query);
 		$stmt->execute();
 		$result=$stmt->get_result();
-		$row=$result->fetch_assoc();
 		$out="";
-		if($row){
-			foreach($row as $x){
-				$out=$out.$x.", ";
-			}
+		while($row=$result->fetch_assoc()){
+			$out=$out.$row['nazwa'].", ";
 		}
 		return $out;
 	}
@@ -257,6 +254,10 @@ class BlogManager extends mysqli{
 			}
 		}
 		return $output;
+	}
+
+	public function getPostCategory($postID){
+
 	}
 }
 
