@@ -8,8 +8,10 @@ div#kontener{
 	margin: 0 auto;
 	background-color:#fefefe;
 	width: 900px;
-	height:100%;
+	height:auto;
+	min-height:100%;
 	border: 2px #3f3f3f dotted;
+	overflow:auto;
 }
 
 div#naglowek{
@@ -21,7 +23,6 @@ div#naglowek{
 
 div#srodek{
 	height: 85%;
-	//background-color:yellow;
 }
 
 div#kol_lewa{
@@ -29,8 +30,9 @@ div#kol_lewa{
 	padding-left: 15px;
 	padding-right: 15px;
 	width:650px;
-	height: 100%;
-	border:1px solid black;
+	min-height:100%;
+	height: auto;
+	/*border:1px solid black;*/
 }
 
 
@@ -38,7 +40,7 @@ div#kol_prawa{
 	float:left;
 	width:215px;
 	height: auto;
-	border:1px solid black;
+	/*border:1px solid black;*/
 }
 
 p.tytul{

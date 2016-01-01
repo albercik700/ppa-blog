@@ -172,18 +172,132 @@ class BlogManager extends mysqli{
 		$stmt=$this->prepare("select id,nazwa from status");
 		$stmt->execute();
 		$result=$stmt->get_result();
-		echo $result;
+		$tab=array();
+		while($row=$result->fetch_assoc()){
+			$tab[$row['id']]=$row['nazwa'];
+		}
+		return $tab;
+	}
+
+	public function getTags(){
+		$stmt=$this->prepare("select id,nazwa from tagi");
+		$stmt->execute();
+		$result=$stmt->get_result();
+		$tab=array();
+		while($row=$result->fetch_assoc()){
+			$tab[$row['id']]=$row['nazwa'];
+		}
+		return $tab;
+	}
+
+	public function addPost($title,$status,$tagi,$tresc){
+		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
+			$data_wpisu=date("Y-m-d H:i:s");
+			$adres_ip=$_SERVER['REMOTE_ADDR'];
+			$stmt=$this->prepare("insert into wpisy(fk_uzytkownik,fk_status,temat,data_wpisu,tresc,adres_ip) values(?,?,?,?,?,?)");
+			$stmt->bind_param("ddssss",$_SESSION['id'],$status,$title,$data_wpisu,$tresc,$adres_ip);
+			$stmt->execute();
+			$result=$stmt->affected_rows;
+			if($result!=0 && count($tagi)>0){
+				$output=$this->query("select max(id) from wpisy where fk_uzytkownik=".$_SESSION['id'])->fetch_all();
+				foreach($tagi as $tag){
+					$stmt=$this->prepare("insert into wpisy_tagi(fk_wpis,fk_uzytkownik,fk_tag) values(?,?,?)");
+					$stmt->bind_param("ddd",$output,$_SESSION['id'],$tag);
+					$stmt->execute();
+					$result=$stmt->affected_rows;
+					if($result!=0)
+						continue;
+				}
+				return 1;//True
+			}
+			$stmt->close();
+		}
+		return 0;//False;
+	}
+
+	public function showPosts($userID=0,$limit=9999,$offset=0){
+		$output=array();
+		if($userID==0){
+			$stmt=$this->prepare("select count(*) as ilosc from (select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts join uzytkownicy users on posts.fk_uzytkownik=users.id left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik)x");
+			$stmt->execute();
+			$result=$stmt->get_result();
+			$count=$result->fetch_assoc()['ilosc'];
+			array_push($output,$count);
+			$stmt->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts
+				join uzytkownicy users on posts.fk_uzytkownik=users.id
+				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik order by posts.data_wpisu desc limit ? offset ?");
+			$stmt->bind_param("ii",$limit,$offset);
+			$stmt->execute();
+			$result=$stmt->get_result();
+			while($row=$result->fetch_assoc()){
+				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc']);
+				array_push($output,$wpis);
+				unset($wpis);
+			}
+		}else{
+			$stmt=$this->prepare("select count(*) as ilosc from (select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts
+				join uzytkownicy users on posts.fk_uzytkownik=users.id
+				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik where users.id=?)x");
+			$stmt->bind_param("i",$userID);
+			$stmt->execute();
+			$result=$stmt->get_result();
+			$count=$result->fetch_assoc()['ilosc'];
+			array_push($output,$count);
+			$stmt->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts
+				join uzytkownicy users on posts.fk_uzytkownik=users.id
+				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik 
+				where users.id=? order by posts.data_wpisu desc limit ? offset ?");
+			$stmt->bind_param("iii",$userID,$limit,$offset);
+			$stmt->execute();
+			$result=$stmt->get_result();
+			while($row=$result->fetch_assoc()){
+				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc']);
+				array_push($output,$wpis);
+				unset($wpis);
+			}
+		}
+		return $output;
 	}
 }
-class Post{
+
+class Wpis{
 	private $id;
-	private $temat;
-	private $tresc;
-	private $autor;
-	private $data_wpisu;
-	private $tagi=array();
-	function __construct($db,$temat,$tresc,$autor,$data_wpisu,$tagi=array()){
-		
+	private $title;
+	private $author;
+	private $createdate;
+	private $editdate;
+	private $content;
+	function __construct($wpisID,$wpisTitle,$wpisUser,$wpisCreateDate,$wpisEditDate="",$wpisContent){
+		$this->id=$wpisID;
+		$this->title=$wpisTitle;
+		$this->author=$wpisUser;
+		$this->createdate=$wpisCreateDate;
+		$this->editdate=$wpisEditDate;
+		$this->content=$wpisContent;
+	}
+
+	public function getID(){
+		return $this->id;
+	}
+
+	public function getTitle(){
+		return $this->title;
+	}
+
+	public function getAuthor(){
+		return $this->author;
+	}
+
+	public function getCreateDate(){
+		return $this->createdate;
+	}
+
+	public function getEditDate(){
+		return $this->editdate;
+	}
+
+	public function getContent(){
+		return $this->content;
 	}
 }
 ?>

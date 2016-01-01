@@ -1,4 +1,28 @@
 <?php
+function pagination($count,$page,$all=0){
+	$action_tab=array("ShowPosts","ShowMyPosts");
+	if($all==0)
+		$action=$action_tab[0];
+	else
+		$action=$action_tab[1];
+	echo "<center>Strony ";
+	if(($count/3-(int)($count/3))>0){
+		for($i=0;$i<(int)($count/3)+1;$i++){
+			if($i==$page)
+				echo "<b>$i</b>\n";
+			else
+				echo "<a href=\"?act=$action&page=$i\">$i</a>\n";
+		}
+	}else{
+		for($i=0;$i<$count/3;$i++){
+			if($i==$page)
+				echo "<b>$i</b>\n";
+			else
+				echo "<a href=\"?act=$action&page=$i\">$i</a>\n";
+		}
+	}
+	echo "</center><br/>\n";
+}
 echo "<div id=\"kol_lewa\">\n";
 if($_SERVER['REQUEST_METHOD']=='POST'){
 	if(isset($_POST['login']) && isset($_POST['passw'])){
@@ -6,7 +30,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 			echo "<p class=\"alert\">Zostałeś zalogowany</p>\n";
 		}else{
 			echo "<p class=\"alert\">Nieprawidłowy login lub hasło</p>\n";
-			}
+		}
 	}else if(isset($_POST['r_login']) && isset($_POST['r_passw']) && isset($_POST['r_mail'])){
 		if($db->register($_POST['r_login'],$_POST['r_passw'],$_POST['r_mail'])==1){
 			echo "<p class=\"alert\">Zostałeś zarejestrowany</p>\n";
@@ -19,12 +43,38 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		}else{
 			echo "<p class=\"alert\">Aktualizacja profilu nie powiodła się</p>\n";
 		}
+	}else if(isset($_POST['title']) && isset($_POST['status']) && isset($_POST['tresc']) && isset($_POST['tagi'])){
+		if($db->addPost($_POST['title'],$_POST['status'],$_POST['tagi'],$_POST['tresc'])==1){
+			echo "<p class=\"alert\">Wpis został dodany</p>\n";
+		}else{
+			echo "<p class=\"alert\">Dodanie wpisu nie powiodło się</p>\n";
+		}
 	}
-}else if($_SERVER['REQUEST_METHOD']=='GET'){
+	$count=current($db->showPosts(0,3));
+	foreach($db->showPosts(0,3) as $key=>$wpis){
+		if($key<1)
+			continue;
+		echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
+		echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+		echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+		echo "<hr/>\n";
+	}
+	pagination($count,0);
+}if($_SERVER['REQUEST_METHOD']=='GET'){
 	if(isset($_GET['act']) and $_GET['act']=='LogOut'){
 		if($db->logOut()==1){
 			echo "<p class=\"alert\">Zostałeś wylogowany</p>";
 		}
+		$count=current($db->showPosts(0,3));
+		foreach($db->showPosts(0,3) as $key=>$wpis){
+			if($key<1)
+				continue;
+			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+			echo "<hr/>\n";
+		}
+		pagination($count,0);
 	}else if(isset($_GET['act']) and $_GET['act']=='EditProfile'){
 		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
 			echo "<h3><b>Zarządzanie profilem</b></h3><br/>\n";
@@ -34,18 +84,66 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
 			echo "<h3><b>Dodawanie wpisu</b></h3><br/>\n";
 			echo "<form method=\"POST\" action=\".\">\nTytul\n<Input type=\"text\" name=\"title\"/><br/>\n";
-			echo $db->getStatus();
-			echo "Status\n<select>\n";
-			foreach($db->getStatus() as $x){
-				echo "<option value=\"$x\">$x</option>\n";
+			echo "Status\n<select name=\"status\">\n";
+			foreach($db->getStatus() as $key=>$val){
+				echo "<option value=\"$key\">$val</option>\n";
 			}
-			echo "</select>\n";
+			echo "</select><br/>\n";
+			echo "Tagi<br/>\n";
+			foreach($db->getTags() as $key=>$val){
+				echo "<input type=\"checkbox\" name=\"tagi[]\" value=\"$key\">$val</input>\n";
+			}
 			echo "<textarea rows=\"20\" cols=\"70\" name=\"tresc\"></textarea>\n";
 			echo "<br/>\n<input type=\"submit\" value=\"Dodaj\"/>\n</form>";
 		}
+	}else if(isset($_GET['act']) and $_GET['act']=='ShowMyPosts' and !isset($_GET['page'])){
+		$count=current($db->showPosts($_SESSION['id'],3));
+		foreach($db->showPosts($_SESSION['id'],3) as $key=>$wpis){
+			if($key<1)
+				continue;
+			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+			echo "<hr/>\n";
+		}
+		pagination($count,$_GET['page'],1);
+	}else if(isset($_GET['act']) and $_GET['act']=='ShowMyPosts' and isset($_GET['page']) and ctype_digit($_GET['page'])){
+		$count=current($db->showPosts($_SESSION['id'],3));
+		foreach($db->showPosts($_SESSION['id'],3,$_GET['page']*3) as $key=>$wpis){
+			if($key<1)
+				continue;
+			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+			echo "<hr/>\n";
+		}
+		pagination($count,$_GET['page'],1);
+	}else if(isset($_GET['act']) and $_GET['act']=='ShowPosts' and isset($_GET['page']) and ctype_digit($_GET['page'])){
+		$count=current($db->showPosts(0,3));
+		foreach($db->showPosts(0,3,$_GET['page']*3) as $key=>$wpis){
+			if($key<1)
+				continue;
+			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+			echo "<hr/>\n";
+		}
+		pagination($count,$_GET['page']);
+	}else{
+		$count=current($db->showPosts(0,3));
+		foreach($db->showPosts(0,3) as $key=>$wpis){
+			if($key<1)
+				continue;
+			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+			echo "<hr/>\n";
+		}
+		pagination($count,0);
 	}
+	
 }else{
-	include "http://hmpg.net/";
+	echo "";
 }
 if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
 	//wpisy
@@ -55,7 +153,7 @@ if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
 	}
 	echo "</ul>";
 	echo "<ul>\n<li><a href=\"?act=EditProfile\">Edytuj profil</a></li>\n";
-	echo "<li><a href=\"?act=ShowMyPosts\">Wyświetl moje wpisy</a></li>\n";
+	echo "<li><a href=\"?act=ShowMyPosts&page=0\">Wyświetl moje wpisy</a></li>\n";
 	echo "<li><a href=\"?act=AddPost\">Dodaj wpis</a></li>\n";
 	echo "<li><a href=\"?act=LogOut\">Wyloguj się</a></li>\n</ul>\n</div>\n";
 }else{
