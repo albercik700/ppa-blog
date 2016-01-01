@@ -2,7 +2,7 @@
 class BlogManager extends mysqli{
 	private $id;
 	private $nazwa;
-	private $haslo;
+	//private $haslo;
 	private $email;
 	private $data_rejestracji;
 	private $sesja;
@@ -28,23 +28,24 @@ class BlogManager extends mysqli{
 		$result=$stmt->get_result();
 		while($row=$result->fetch_assoc()){
 			if($row['nazwa']==$username)
-				return 0;
+				return 0; //false
 		}
-		return 1;
+		return 1; //true
 	}
 
 	public function register($username,$password,$email){
-		if($this->re_text($username)!=0 and $this->re_email($email) and $this->username_av($username)!=0 and sizeof($password)>=8){
+		if($this->re_text($username)==1 and $this->re_email($email)==1 and $this->username_av($username)==1 and strlen($password)>=8){
 			$password=hash("sha512",'31337|'.$password);
 			$date=date("Y-m-d H:i:s");	
-			$stmt=$this->prepare("insert into uzytkownicy(nazwa,pass,email,data_rejestracji) values(?,?,?,?)");
-			$stmt->bind_param("ssss",$username,$password,$emila,$date);
+			$stmt=$this->prepare("insert into uzytkownicy(nazwa,pass,email,aktywny,data_rejestracji) values(?,?,?,1,?)");
+			$stmt->bind_param("ssss",$username,$password,$email,$date);
 			$stmt->execute();
 			$result=$stmt->get_result();
-			if($result)
-				return 1;
+			echo $result;
+			if(!$result)
+				return 1; //true
 		}
-		return 0;
+		return 0; //false
 	}
 
 	public function logIn($username,$password){
@@ -57,11 +58,14 @@ class BlogManager extends mysqli{
 		if(!isset($_SESSION['login']) and $this->re_text($username)==1 and $password==$row['pass'] and !is_null($row)){
 			$this->id=$row['id'];
 			$this->nazwa=$row['nazwa'];
-			$this->haslo=$row['pass'];
+			//$this->haslo=$row['pass'];
 			$this->email=$row['email'];
 			$this->data_rejestracji=$row['data_rejestracji'];
 			$this->sesja=session_id();
 			$_SESSION['login']=session_id();
+			$_SESSION['nazwa']=$this->nazwa;
+			$_SESSION['email']=$this->email;
+			$_SESSION['data_rejestracji']=$this->data_rejestracji;
 			$poczatek_sesji=date("Y-m-d H:i:s");
 			$koniec_sesji=date("Y-m-d H:i:s",strtotime("+25 minutes",strtotime($poczatek_sesji)));
 			$stmt->prepare("insert into zalogowani(fk_uzytkownik,sesja,poczatek_sesji,koniec_sesji) values(?,?,?,?)");
@@ -77,15 +81,13 @@ class BlogManager extends mysqli{
 
 	public function logOut(){
 		session_destroy();
-		$stmt=$this->prepare("select id from zalogowani where sesja = ?");
+		$stmt=$this->prepare("delete from zalogowani where sesja = ?");
 		$stmt->bind_param("s",$_SESSION['login']);
 		$stmt->execute();
-		$result=$stmt->get_result();
-		if($stmt->affected_rows>0)
-			$this->id=$result->fetch_assoc()['id'];
-		$stmt->prepare("delete from zalogowani where id = ?");
-		$stmt->bind_param("d",$this->id);
-		$stmt->execute();
+		unset($_SESSION['login']);
+		unset($_SESSION['nazwa']);
+		unset($_SESSION['data_rejestracji']);
+		unset($_SESSION['email']);
 		if($stmt->affected_rows==1)
 			return 1;
 		else

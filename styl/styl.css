@@ -75,3 +75,8 @@ p.tresc{
 p.wiecej{
 	text-align:right;
 }
+
+a#logo{
+	text-decoration:none;
+	color:black;
+}
