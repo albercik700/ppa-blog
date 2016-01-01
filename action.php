@@ -23,6 +23,20 @@ function pagination($count,$page,$all=0){
 	}
 	echo "</center><br/>\n";
 }
+
+function poster($wpis){
+	echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+			echo "<p class=\"tresc\">".substr($wpis->getContent(),0,700)."<a href=\"?post=".$wpis->getID()."\">(...)</a></p>\n";
+			echo "<p class=\"meta\">\n";
+			foreach($wpis->getCategory() as $k=>$v){
+				echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
+			}
+			echo "</p>\n";
+			echo "<hr/>\n";
+}
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 echo "<div id=\"kol_lewa\">\n";
 if($_SERVER['REQUEST_METHOD']=='POST'){
 	if(isset($_POST['login']) && isset($_POST['passw'])){
@@ -54,10 +68,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 	foreach($db->showPosts(0,3) as $key=>$wpis){
 		if($key<1)
 			continue;
-		echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
-		echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-		echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-		echo "<hr/>\n";
+		poster($wpis);
 	}
 	pagination($count,0);
 }if($_SERVER['REQUEST_METHOD']=='GET'){
@@ -69,10 +80,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		foreach($db->showPosts(0,3) as $key=>$wpis){
 			if($key<1)
 				continue;
-			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
-			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-			echo "<hr/>\n";
+			poster($wpis);
 		}
 		pagination($count,0);
 	}else if(isset($_GET['act']) and $_GET['act']=='EditProfile'){
@@ -101,10 +109,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		foreach($db->showPosts($_SESSION['id'],3) as $key=>$wpis){
 			if($key<1)
 				continue;
-			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
-			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-			echo "<hr/>\n";
+			poster($wpis);
 		}
 		pagination($count,$_GET['page'],1);
 	}else if(isset($_GET['act']) and $_GET['act']=='ShowMyPosts' and isset($_GET['page']) and ctype_digit($_GET['page'])){
@@ -112,10 +117,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		foreach($db->showPosts($_SESSION['id'],3,$_GET['page']*3) as $key=>$wpis){
 			if($key<1)
 				continue;
-			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
-			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-			echo "<hr/>\n";
+			poster($wpis);
 		}
 		pagination($count,$_GET['page'],1);
 	}else if(isset($_GET['act']) and $_GET['act']=='ShowPosts' and isset($_GET['page']) and ctype_digit($_GET['page'])){
@@ -123,21 +125,42 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		foreach($db->showPosts(0,3,$_GET['page']*3) as $key=>$wpis){
 			if($key<1)
 				continue;
-			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
-			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-			echo "<hr/>\n";
+			poster($wpis);
 		}
 		pagination($count,$_GET['page']);
+	}else if(isset($_GET['post']) and ctype_digit($_GET['post'])){
+		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
+			foreach($db->showPost($_GET['post']) as $key=>$wpis){
+				echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
+				echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate(); 
+				echo " <a href=\"?post=".$wpis->getID()."&edit\">[Edytuj]</a></p>\n";
+				echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+				echo "<p class=\"meta\">\n";
+				foreach($wpis->getCategory() as $k=>$v){
+					echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
+				}
+				echo "</p>\n";
+				echo "<hr/>\n";
+			}
+		}else{
+			foreach($db->showPost($_GET['post']) as $key=>$wpis){
+				echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
+				echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+				echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+				echo "<p class=\"meta\">\n";
+				foreach($wpis->getCategory() as $k=>$v){
+					echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
+				}
+				echo "</p>\n";
+				echo "<hr/>\n";
+			}
+		}
 	}else{
 		$count=current($db->showPosts(0,3));
 		foreach($db->showPosts(0,3) as $key=>$wpis){
 			if($key<1)
 				continue;
-			echo "<p class=\"tytul\">".$wpis->getTitle()."</p>\n";
-			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-			echo "<hr/>\n";
+			poster($wpis);
 		}
 		pagination($count,0);
 	}

@@ -212,6 +212,18 @@ class BlogManager extends mysqli{
 		return 0;//False;
 	}
 
+	private function getPostCategory($postID){
+		$stmt=$this->prepare("select cat.id,cat.nazwa from wpisy_tagi JOIN tagi cat on cat.id=wpisy_tagi.fk_tag where wpisy_tagi.fk_wpis=?");
+		$stmt->bind_param("i",$postID);
+		$stmt->execute();
+		$result=$stmt->get_result();
+		$out=array();
+		while($row=$result->fetch_assoc()){
+			$out[$row['id']]=$row['nazwa'];
+		}
+		return $out;
+	}
+
 	public function showPosts($userID=0,$limit=9999,$offset=0){
 		$output=array();
 		if($userID==0){
@@ -227,7 +239,7 @@ class BlogManager extends mysqli{
 			$stmt->execute();
 			$result=$stmt->get_result();
 			while($row=$result->fetch_assoc()){
-				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc']);
+				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']));
 				array_push($output,$wpis);
 				unset($wpis);
 			}
@@ -248,7 +260,7 @@ class BlogManager extends mysqli{
 			$stmt->execute();
 			$result=$stmt->get_result();
 			while($row=$result->fetch_assoc()){
-				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc']);
+				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']));
 				array_push($output,$wpis);
 				unset($wpis);
 			}
@@ -256,8 +268,18 @@ class BlogManager extends mysqli{
 		return $output;
 	}
 
-	public function getPostCategory($postID){
-
+	public function showPost($postID=0){
+		$output=array();
+		$stmt=$this->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts join uzytkownicy users on posts.fk_uzytkownik=users.id left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik where posts.id=?");
+		$stmt->bind_param("i",$postID);
+		$stmt->execute();
+		$result=$stmt->get_result();
+		while($row=$result->fetch_assoc()){
+			$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']));
+			array_push($output,$wpis);
+			unset($wpis);
+		}
+		return $output;
 	}
 }
 
@@ -268,13 +290,15 @@ class Wpis{
 	private $createdate;
 	private $editdate;
 	private $content;
-	function __construct($wpisID,$wpisTitle,$wpisUser,$wpisCreateDate,$wpisEditDate="",$wpisContent){
+	private $category;
+	function __construct($wpisID,$wpisTitle,$wpisUser,$wpisCreateDate,$wpisEditDate="",$wpisContent,$wpisCategory=array()){
 		$this->id=$wpisID;
 		$this->title=$wpisTitle;
 		$this->author=$wpisUser;
 		$this->createdate=$wpisCreateDate;
 		$this->editdate=$wpisEditDate;
 		$this->content=$wpisContent;
+		$this->category=$wpisCategory;
 	}
 
 	public function getID(){
@@ -299,6 +323,10 @@ class Wpis{
 
 	public function getContent(){
 		return $this->content;
+	}
+
+	public function getCategory(){
+		return $this->category;
 	}
 }
 ?>
