@@ -30,9 +30,9 @@ function poster($wpis){
 		echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\"><i>[".$wpis->getStatus()."]</i> ".$wpis->getTitle()."</a></p>\n";
 	else
 		echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
-	echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."<br/>";
+	echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate();
 	if($wpis->getEditDate()!="")
-		echo "Data edycji: ".$wpis->getEditDate();
+		echo "<br/>Data edycji: ".$wpis->getEditDate();
 	if(isset($_SESSION['login']) && $wpis->getAuthor()==$_SESSION['nazwa']){
 		echo "  <a href=\"?post=".$wpis->getID()."&edit\">[Edytuj]</a></p>";
 	}else
@@ -46,7 +46,6 @@ function poster($wpis){
 	echo "<hr/>\n";
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
-
 echo "<div id=\"kol_lewa\">\n";
 if($_SERVER['REQUEST_METHOD']=='POST'){
 	//Obsługa logowania
@@ -100,6 +99,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 	}
 	pagination($count,0);
 }if($_SERVER['REQUEST_METHOD']=='GET'){
+	$db->checkSession();
 	//Wylogowanie
 	if(isset($_GET['act']) and $_GET['act']=='LogOut'){
 		if($db->logOut()==1){

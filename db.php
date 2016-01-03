@@ -91,6 +91,8 @@ class BlogManager extends mysqli{
 		unset($_SESSION['nazwa']);
 		unset($_SESSION['data_rejestracji']);
 		unset($_SESSION['email']);
+		session_start();
+		session_regenerate_id();
 		if($stmt->affected_rows==1)
 			return 1;
 		else
@@ -115,7 +117,7 @@ class BlogManager extends mysqli{
 	}
 
 	public function showLoggedIn(){
-		$query="select usr.nazwa from zalogowani zal join uzytkownicy usr on zal.fk_uzytkownik=usr.id ";
+		$query="select distinct usr.nazwa from zalogowani zal join uzytkownicy usr on zal.fk_uzytkownik=usr.id ";
 		$stmt=$this->prepare($query);
 		$stmt->execute();
 		$result=$stmt->get_result();
@@ -162,6 +164,17 @@ class BlogManager extends mysqli{
 					return 1;//True;
 			}
 			return 0;//False;
+		}
+	}
+
+	public function checkSession(){
+		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
+			$curr_date=date("Y-m-d H:i:s",strtotime("+25 minutes",strtotime(date("Y-m-d H:i:s"))));
+			$stmt=$this->prepare("update zalogowani set koniec_sesji=? where sesja=?");
+			$stmt->bind_param("ss",$curr_date,$_SESSION['login']);
+			$stmt->execute();
+		}else{
+			$this->logOut();
 		}
 	}
 
