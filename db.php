@@ -195,19 +195,49 @@ class BlogManager extends mysqli{
 			$stmt->bind_param("ddssss",$_SESSION['id'],$status,$title,$data_wpisu,$tresc,$adres_ip);
 			$stmt->execute();
 			$result=$stmt->affected_rows;
-			if($result!=0 && count($tagi)>0){
-				$output=$this->query("select max(id) from wpisy where fk_uzytkownik=".$_SESSION['id'])->fetch_all();
+			echo $result;
+			if($result>0 && count($tagi)>0){
+				echo "inside";
+				$output=$this->query("select max(id) as id from wpisy where fk_uzytkownik=".$_SESSION['id'])->fetch_assoc()['id'];
 				foreach($tagi as $tag){
+					echo "inside tags";
 					$stmt=$this->prepare("insert into wpisy_tagi(fk_wpis,fk_uzytkownik,fk_tag) values(?,?,?)");
 					$stmt->bind_param("ddd",$output,$_SESSION['id'],$tag);
 					$stmt->execute();
 					$result=$stmt->affected_rows;
-					if($result!=0)
-						continue;
+					echo $result;
 				}
 				return 1;//True
 			}
 			$stmt->close();
+		}
+		return 0;//False;
+	}
+
+	public function editPost($id,$title,$status,$tagi,$tresc){
+		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
+			foreach($this->showPost($id) as $wpis){
+				if($wpis->getAuthor()==$_SESSION['nazwa']){
+					$stmt=$this->prepare("update wpisy set fk_status=?,temat=?,tresc=? where id=?");
+					$stmt->bind_param("issd",$status,$title,$tresc,$wpis->getID());
+					$stmt->execute();
+					$result=$stmt->affected_rows;
+					$stmt->prepare("delete from wpisy_tagi where fk_wpis=?");
+					$stmt->bind_param("d",$wpis->getID());
+					$stmt->execute();
+					$result=$stmt->affected_rows;
+					foreach($tagi as $v){
+						$stmt=$this->prepare("insert into wpisy_tagi(fk_wpis,fk_uzytkownik,fk_tag) values(?,?,?)");
+						$stmt->bind_param("ddd",$wpis->getID(),$_SESSION['id'],$v);
+						$stmt->execute();
+						$result=$stmt->affected_rows;
+						if($result!=0)
+							continue;
+					}
+					return 1;//True	
+					$stmt->close();
+				}
+			}
 		}
 		return 0;//False;
 	}

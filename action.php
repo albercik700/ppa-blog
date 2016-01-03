@@ -26,14 +26,14 @@ function pagination($count,$page,$all=0){
 
 function poster($wpis){
 	echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
-			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-			echo "<p class=\"tresc\">".substr($wpis->getContent(),0,700)."<a href=\"?post=".$wpis->getID()."\">(...)</a></p>\n";
-			echo "<p class=\"meta\">\n";
-			foreach($wpis->getCategory() as $k=>$v){
-				echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
-			}
-			echo "</p>\n";
-			echo "<hr/>\n";
+	echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+	echo "<p class=\"tresc\">".substr($wpis->getContent(),0,700)."<a href=\"?post=".$wpis->getID()."\">(...)</a></p>\n";
+	echo "<p class=\"meta\">\n";
+	foreach($wpis->getCategory() as $k=>$v){
+		echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
+	}
+	echo "</p>\n";
+	echo "<hr/>\n";
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,6 +62,12 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 			echo "<p class=\"alert\">Wpis został dodany</p>\n";
 		}else{
 			echo "<p class=\"alert\">Dodanie wpisu nie powiodło się</p>\n";
+		}
+	}else if(isset($_POST['ch_id']) && isset($_POST['ch_title']) && isset($_POST['ch_status']) && isset($_POST['ch_tresc']) && isset($_POST['ch_tagi'])){
+		if($db->editPost($_POST['ch_id'],$_POST['ch_title'],$_POST['ch_status'],$_POST['ch_tagi'],$_POST['ch_tresc'])==1){
+			echo "<p class=\"alert\">Wpis został zmieniony</p>\n";
+		}else{
+			echo "<p class=\"alert\">Zmiana wpisu nie powiodło się</p>\n";
 		}
 	}
 	$count=current($db->showPosts(0,3));
@@ -128,31 +134,45 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 			poster($wpis);
 		}
 		pagination($count,$_GET['page']);
-	}else if(isset($_GET['post']) and ctype_digit($_GET['post'])){
-		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
-			foreach($db->showPost($_GET['post']) as $key=>$wpis){
-				echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
-				echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate(); 
+	}else if(isset($_GET['post']) and ctype_digit($_GET['post']) and !isset($_GET['edit'])){
+		foreach($db->showPost($_GET['post']) as $key=>$wpis){
+			echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
+			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate(); 
+			if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1 && $wpis->getAuthor()==$_SESSION['nazwa'])
 				echo " <a href=\"?post=".$wpis->getID()."&edit\">[Edytuj]</a></p>\n";
-				echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-				echo "<p class=\"meta\">\n";
-				foreach($wpis->getCategory() as $k=>$v){
-					echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
-				}
+			else
 				echo "</p>\n";
-				echo "<hr/>\n";
+			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
+			echo "<p class=\"meta\">\n";
+			foreach($wpis->getCategory() as $k=>$v){
+				echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
 			}
-		}else{
-			foreach($db->showPost($_GET['post']) as $key=>$wpis){
-				echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
-				echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
-				echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";
-				echo "<p class=\"meta\">\n";
-				foreach($wpis->getCategory() as $k=>$v){
-					echo "<a class=\"meta\" href=\"\">".$v."</a>\n";
+			echo "</p>\n";
+			echo "<hr/>\n";
+		}
+	}else if(isset($_GET['post']) and ctype_digit($_GET['post']) and isset($_GET['edit']) and isset($_SESSION['login']) and $db->logStatus($_SESSION['login'])==1){
+		foreach($db->showPost($_GET['post']) as $key=>$wpis){
+			if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1 && $wpis->getAuthor()==$_SESSION['nazwa']){
+				echo "<h3><b>Edycja wpisu</b></h3><br/>\n";
+				echo "<form method=\"POST\" action=\".\">\n";
+				echo "<input type=\"hidden\" name=\"ch_id\" value=\"".$wpis->getID()."\"/>";
+				echo "Tytul\n<Input type=\"text\" id=\"title\"name=\"ch_title\" value=\"".$wpis->getTitle()."\"/><br/>\n";
+				echo "Status\n<select name=\"ch_status\">\n";
+				foreach($db->getStatus() as $key=>$val){
+					echo "<option value=\"$key\">$val</option>\n";
 				}
-				echo "</p>\n";
-				echo "<hr/>\n";
+				echo "</select><br/>\n";
+				echo "Tagi<br/>\n";
+				foreach($db->getTags() as $key=>$val){
+					if(in_array($val,$wpis->getCategory(),true))
+						echo "<input type=\"checkbox\" name=\"ch_tagi[]\" value=\"$key\" checked>$val</input>\n";
+					else
+						echo "<input type=\"checkbox\" name=\"ch_tagi[]\" value=\"$key\">$val</input>\n";
+				}
+				echo "<textarea rows=\"20\" cols=\"70\" name=\"ch_tresc\">".$wpis->getContent()."</textarea>\n";
+				echo "<br/>\n<input type=\"submit\" value=\"Zmień\"/>\n</form>";
+			}else{
+				header("Location:?post=".$_GET['post']);
 			}
 		}
 	}else{
