@@ -25,10 +25,15 @@ function pagination($count,$page,$all=0){
 }
 
 function poster($wpis){
-	echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
+	if(isset($_SESSION['login']) && $wpis->getAuthor()==$_SESSION['nazwa'])
+		echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\"><i>[".$wpis->getStatus()."]</i> ".$wpis->getTitle()."</a></p>\n";
+	else
+		echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
 	echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate();
-	echo "<br/>\nStatus: ".$wpis->getStatus();
-	echo "</p>\n";
+	if(isset($_SESSION['login']) && $wpis->getAuthor()==$_SESSION['nazwa']){
+		echo "  <a href=\"?post=".$wpis->getID()."&edit\">[Edytuj]</a></p>";
+	}else
+		echo "</p>\n";
 	echo "<p class=\"tresc\">".substr($wpis->getContent(),0,700)."<a href=\"?post=".$wpis->getID()."\">(...)</a></p>\n";
 	echo "<p class=\"meta\">\n";
 	foreach($wpis->getCategory() as $k=>$v){
@@ -65,12 +70,19 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		}else{
 			echo "<p class=\"alert\">Dodanie wpisu nie powiodło się</p>\n";
 		}
-	}else if(isset($_POST['ch_id']) && isset($_POST['ch_title']) && isset($_POST['ch_status']) && isset($_POST['ch_tresc']) && isset($_POST['ch_tagi'])){
-		if($db->editPost($_POST['ch_id'],$_POST['ch_title'],$_POST['ch_status'],$_POST['ch_tagi'],$_POST['ch_tresc'])==1){
-			echo "<p class=\"alert\">Wpis został zmieniony</p>\n";
+	}else if(isset($_POST['ch_id']) && isset($_POST['ch_title']) && isset($_POST['ch_status']) && isset($_POST['ch_tresc'])){
+		if(isset($_POST['ch_tagi'])){
+			if($db->editPost($_POST['ch_id'],$_POST['ch_title'],$_POST['ch_status'],$_POST['ch_tresc'],$_POST['ch_tagi'])==1)
+				echo "<p class=\"alert\">Wpis został zmieniony</p>\n";
+			else
+				echo "<p class=\"alert\">Zmiana wpisu nie powiodło się</p>\n";
 		}else{
-			echo "<p class=\"alert\">Zmiana wpisu nie powiodło się</p>\n";
+			if($db->editPost($_POST['ch_id'],$_POST['ch_title'],$_POST['ch_status'],$_POST['ch_tresc'])==1)
+				echo "<p class=\"alert\">Wpis został zmieniony</p>\n";
+			else
+				echo "<p class=\"alert\">Zmiana wpisu nie powiodło się</p>\n";
 		}
+		
 	}
 	$count=current($db->showPosts(0,3));
 	foreach($db->showPosts(0,3) as $key=>$wpis){

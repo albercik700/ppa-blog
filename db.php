@@ -214,7 +214,7 @@ class BlogManager extends mysqli{
 		return 0;//False;
 	}
 
-	public function editPost($id,$title,$status,$tagi,$tresc){
+	public function editPost($id,$title,$status,$tresc,$tagi=array()){
 		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
 			foreach($this->showPost($id) as $wpis){
 				if($wpis->getAuthor()==$_SESSION['nazwa']){
@@ -234,8 +234,8 @@ class BlogManager extends mysqli{
 						if($result!=0)
 							continue;
 					}
-					return 1;//True	
 					$stmt->close();
+					return 1;//True	
 				}
 			}
 		}
