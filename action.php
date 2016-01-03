@@ -117,6 +117,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
 			echo "<h3><b>Zarządzanie profilem</b></h3><br/>\n";
 			echo "<form method=\"POST\" action=\".\">\nHasło:<Input type=\"password\" name=\"ch_passw\"/><br/>\nE-mail:<input type=\"text\" name=\"ch_mail\"/><br/>\n<input type=\"submit\" value=\"Zmień\"/>\n</form>";
+		}else{
+			header("Location:index.php");
 		}
 	//Formularz dodawania wpisów
 	}else if(isset($_GET['act']) and $_GET['act']=='AddPost'){
@@ -134,25 +136,35 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 			}
 			echo "<textarea rows=\"20\" cols=\"70\" name=\"tresc\"></textarea>\n";
 			echo "<br/>\n<input type=\"submit\" value=\"Dodaj\"/>\n</form>";
+		}else{
+			header("Location:index.php");
 		}
 	//Wyswietlenie wszystkich postow uzytkownika
 	}else if(isset($_GET['act']) and $_GET['act']=='ShowMyPosts' and !isset($_GET['page'])){
-		$count=current($db->showPosts($_SESSION['id'],3));
-		foreach($db->showPosts($_SESSION['id'],3) as $key=>$wpis){
-			if($key<1)
-				continue;
-			poster($wpis);
+		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
+			$count=current($db->showPosts($_SESSION['id'],3));
+			foreach($db->showPosts($_SESSION['id'],3) as $key=>$wpis){
+				if($key<1)
+					continue;
+				poster($wpis);
+			}
+			pagination($count,$_GET['page'],1);
+		}else{
+			header("Location:index.php");
 		}
-		pagination($count,$_GET['page'],1);
 	//Wyswietlenie wszystkich postow uzytkownika + stronicowanie
 	}else if(isset($_GET['act']) and $_GET['act']=='ShowMyPosts' and isset($_GET['page']) and ctype_digit($_GET['page'])){
-		$count=current($db->showPosts($_SESSION['id'],3));
-		foreach($db->showPosts($_SESSION['id'],3,$_GET['page']*3) as $key=>$wpis){
-			if($key<1)
-				continue;
-			poster($wpis);
+		if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1){
+			$count=current($db->showPosts($_SESSION['id'],3));
+			foreach($db->showPosts($_SESSION['id'],3,$_GET['page']*3) as $key=>$wpis){
+				if($key<1)
+					continue;
+				poster($wpis);
+			}
+			pagination($count,$_GET['page'],1);
+		}else{
+			header("Location:index.php");
 		}
-		pagination($count,$_GET['page'],1);
 	//Wyswietlenie wszystkich postow + stronicowanie
 	}else if(isset($_GET['act']) and $_GET['act']=='ShowPosts' and isset($_GET['page']) and ctype_digit($_GET['page'])){
 		$count=current($db->showPosts(0,3));
@@ -183,7 +195,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 	//Formularz edycji wpisu
 	}else if(isset($_GET['post']) and ctype_digit($_GET['post']) and isset($_GET['edit']) and isset($_SESSION['login']) and $db->logStatus($_SESSION['login'])==1){
 		foreach($db->showPost($_GET['post']) as $key=>$wpis){
-			if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1 && $wpis->getAuthor()==$_SESSION['nazwa']){
+			if($wpis->getAuthor()==$_SESSION['nazwa']){
 				echo "<h3><b>Edycja wpisu</b></h3><br/>\n";
 				echo "<form method=\"POST\" action=\".\">\n";
 				echo "<input type=\"hidden\" name=\"ch_id\" value=\"".$wpis->getID()."\"/>";
@@ -203,7 +215,8 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 				echo "<textarea rows=\"20\" cols=\"70\" name=\"ch_tresc\">".$wpis->getContent()."</textarea>\n";
 				echo "<br/>\n<input type=\"submit\" value=\"Zmień\"/>\n</form>";
 			}else{
-				header("Location:?post=".$_GET['post']);
+				echo "there you are";
+				header("Location:index.php?post=".$_GET['post']);
 			}
 		}
 	}else{
