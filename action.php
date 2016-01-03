@@ -26,7 +26,9 @@ function pagination($count,$page,$all=0){
 
 function poster($wpis){
 	echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
-	echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate()."</p>\n";
+	echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate();
+	echo "<br/>\nStatus: ".$wpis->getStatus();
+	echo "</p>\n";
 	echo "<p class=\"tresc\">".substr($wpis->getContent(),0,700)."<a href=\"?post=".$wpis->getID()."\">(...)</a></p>\n";
 	echo "<p class=\"meta\">\n";
 	foreach($wpis->getCategory() as $k=>$v){
@@ -138,8 +140,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 		foreach($db->showPost($_GET['post']) as $key=>$wpis){
 			echo "<p class=\"tytul\"><a href=\"?post=".$wpis->getID()."\">".$wpis->getTitle()."</a></p>\n";
 			echo "<p class=\"meta\">".$wpis->getAuthor()." ".$wpis->getCreateDate(); 
+			echo "<br/>\nStatus: ".$wpis->getStatus();
 			if(isset($_SESSION['login']) && $db->logStatus($_SESSION['login'])==1 && $wpis->getAuthor()==$_SESSION['nazwa'])
-				echo " <a href=\"?post=".$wpis->getID()."&edit\">[Edytuj]</a></p>\n";
+				echo "  <a href=\"?post=".$wpis->getID()."&edit\">[Edytuj]</a></p>\n";
 			else
 				echo "</p>\n";
 			echo "<p class=\"tresc\">".$wpis->getContent()."</p>\n";

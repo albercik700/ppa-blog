@@ -257,19 +257,19 @@ class BlogManager extends mysqli{
 	public function showPosts($userID=0,$limit=9999,$offset=0){
 		$output=array();
 		if($userID==0){
-			$stmt=$this->prepare("select count(*) as ilosc from (select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts join uzytkownicy users on posts.fk_uzytkownik=users.id left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik)x");
+			$stmt=$this->prepare("select count(*) as ilosc from (select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts join uzytkownicy users on posts.fk_uzytkownik=users.id left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik where posts.fk_status=2)x");
 			$stmt->execute();
 			$result=$stmt->get_result();
 			$count=$result->fetch_assoc()['ilosc'];
 			array_push($output,$count);
-			$stmt->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts
+			$stmt->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit,status.nazwa,status.nazwa as status from wpisy posts
 				join uzytkownicy users on posts.fk_uzytkownik=users.id
-				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik order by posts.data_wpisu desc limit ? offset ?");
+				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik join status on posts.fk_status=status.id where posts.fk_status=2 order by posts.data_wpisu desc limit ? offset ?");
 			$stmt->bind_param("ii",$limit,$offset);
 			$stmt->execute();
 			$result=$stmt->get_result();
 			while($row=$result->fetch_assoc()){
-				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']));
+				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']),$row['status']);
 				array_push($output,$wpis);
 				unset($wpis);
 			}
@@ -282,15 +282,14 @@ class BlogManager extends mysqli{
 			$result=$stmt->get_result();
 			$count=$result->fetch_assoc()['ilosc'];
 			array_push($output,$count);
-			$stmt->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts
+			$stmt->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit,status.nazwa as status  from wpisy posts
 				join uzytkownicy users on posts.fk_uzytkownik=users.id
-				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik 
-				where users.id=? order by posts.data_wpisu desc limit ? offset ?");
+				left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik join status on posts.fk_status=status.id where users.id=? order by posts.data_wpisu desc limit ? offset ?");
 			$stmt->bind_param("iii",$userID,$limit,$offset);
 			$stmt->execute();
 			$result=$stmt->get_result();
 			while($row=$result->fetch_assoc()){
-				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']));
+				$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']),$row['status']);
 				array_push($output,$wpis);
 				unset($wpis);
 			}
@@ -300,12 +299,12 @@ class BlogManager extends mysqli{
 
 	public function showPost($postID=0){
 		$output=array();
-		$stmt=$this->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit from wpisy posts join uzytkownicy users on posts.fk_uzytkownik=users.id left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik where posts.id=?");
+		$stmt=$this->prepare("select posts.*,users.nazwa as uzytkownik,history.last_edit,status.nazwa as status from wpisy posts join uzytkownicy users on posts.fk_uzytkownik=users.id left join (select fk_uzytkownik, max(data_zdarzenia) as last_edit from historia_zdarzen)history on users.id=history.fk_uzytkownik join status on posts.fk_status=status.id where posts.id=?");
 		$stmt->bind_param("i",$postID);
 		$stmt->execute();
 		$result=$stmt->get_result();
 		while($row=$result->fetch_assoc()){
-			$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']));
+			$wpis= new Wpis($row['id'],$row['temat'],$row['uzytkownik'],$row['data_wpisu'],$row['last_edit'],$row['tresc'],$this->getPostCategory($row['id']),$row['status']);
 			array_push($output,$wpis);
 			unset($wpis);
 		}
@@ -321,7 +320,8 @@ class Wpis{
 	private $editdate;
 	private $content;
 	private $category;
-	function __construct($wpisID,$wpisTitle,$wpisUser,$wpisCreateDate,$wpisEditDate="",$wpisContent,$wpisCategory=array()){
+	private $status;
+	function __construct($wpisID,$wpisTitle,$wpisUser,$wpisCreateDate,$wpisEditDate="",$wpisContent,$wpisCategory=array(),$wpisStatus){
 		$this->id=$wpisID;
 		$this->title=$wpisTitle;
 		$this->author=$wpisUser;
@@ -329,6 +329,7 @@ class Wpis{
 		$this->editdate=$wpisEditDate;
 		$this->content=$wpisContent;
 		$this->category=$wpisCategory;
+		$this->status=$wpisStatus;
 	}
 
 	public function getID(){
@@ -357,6 +358,10 @@ class Wpis{
 
 	public function getCategory(){
 		return $this->category;
+	}
+
+	public function getStatus(){
+		return $this->status;
 	}
 }
 ?>
