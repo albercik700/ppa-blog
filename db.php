@@ -218,8 +218,9 @@ class BlogManager extends mysqli{
 		if(isset($_SESSION['login']) && $this->logStatus($_SESSION['login'])==1){
 			foreach($this->showPost($id) as $wpis){
 				if($wpis->getAuthor()==$_SESSION['nazwa']){
-					$stmt=$this->prepare("update wpisy set fk_status=?,temat=?,tresc=? where id=?");
-					$stmt->bind_param("issd",$status,$title,$tresc,$wpis->getID());
+					$data_edycji=date("Y-m-d H:i:s");
+					$stmt=$this->prepare("update wpisy set fk_status=?,temat=?,tresc=?,data_edycji=? where id=?");
+					$stmt->bind_param("isssd",$status,$title,$tresc,$data_edycji,$wpis->getID());
 					$stmt->execute();
 					$result=$stmt->affected_rows;
 					$stmt->prepare("delete from wpisy_tagi where fk_wpis=?");
